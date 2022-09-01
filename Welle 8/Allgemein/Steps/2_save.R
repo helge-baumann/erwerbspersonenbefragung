@@ -1,6 +1,8 @@
 # SPSS der aktuellen Welle in Stata konvertieren
+
+names(dat8) <- str_remove_all(names(dat8), "__8")
 write_dta(dat8, "./Daten_Export/Boeckler_Corona_Welle8_Mai2022_final_v1-1.dta")
-write_sav(dat8, "./Daten_Export/Boeckler_Corona_Welle8_Mai2022_final_v1-1.dta")
+write_sav(dat8, "./Daten_Export/Boeckler_Corona_Welle8_Mai2022_final_v1-1.sav")
 
 # Wide-Datensatz inklsuive Nachzügler speichern
 # zunächst Longformat zurück in Wideformat
