@@ -1,7 +1,7 @@
 # Aufbereitung Erwerbspersonenbefragung Welle 8
 # Helge Emmler
 # R-Version: 4.2.1
-# Letztes Update: 16.08.2022
+# Letztes Update: 01.09.2022
 
 if(!("pacman" %in% installed.packages()[,1])) install.packages("pacman")
 library(pacman)
