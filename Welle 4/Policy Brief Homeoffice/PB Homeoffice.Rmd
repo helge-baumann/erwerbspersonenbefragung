@@ -1,0 +1,93 @@
+---
+title: "Erwerbspersonenbefragung"
+subtitle: "Ergebnisse zum Homeoffice - Vorläufige Daten aus Welle IV"
+author: "Helge Emmler"
+date: "`r format(Sys.time(), '%d. %B %Y')`"
+output:
+  rmdformats::readthedown:
+    highlight: haddock
+    number_sections: no
+    toc_depth: 3
+    toc_float: true
+    self_contained: yes
+  html_document:
+    toc_depth: '3'
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=F}
+if (!("pacman" %in% installed.packages()[, 1])) install.packages("pacman")
+library(pacman)
+p_load(haven, dplyr, stringr, tidyr, ggplot2, gridExtra, kableExtra)
+```
+
+# Zusammenfassung
+
+Die folgende Kurzauswertung wurde anhand der ungewichteten Daten der vierten Welle der Erwerbspersonenbefragung (02.02.2021) erstellt. Grundlage der Ergebnisse sind 5716 Interviews. Aufgrund der Erfahrungen aus den vorherigen Wellen kann davon ausgegangen werden, dass die folgenden Ergebnisse recht robust sind. 
+
+Die Daten ergeben ein sinnvolles Bild:
+
+- Die Homeoffice-Quote, die wir im November mit 14% beziffert hatten, betrug (retrospektiv erfragt) im Dezember 18% und im Januar 25%. Damit ist das Aprilniveau wieder erreicht. 
+- Viele Befragte geben an, *aufgrund* des Beschlusses der Bundesregierung verstärkt im Homeoffice zu sein (ein Drittel derjenigen, die überwiegend im Homeoffice sind).
+- Das "Potenzial" der Tätigkeiten, die ganz oder zum Großteil von zu Hause aus ausgeführt werden können, liegt bei 40% (20% ganz, 20% teilweise); damit reihen wir uns gut in die Forschung ein. 
+- Man kann im Aggregat sagen: 39% arbeiten aktuell ganz/überwiegend/wechselnd im Homeoffice, 40% der Tätigkeiten sind dafür geeignet. Naiv gesprochen: Potenzial ausgeschöpft.
+- Etwas differenzieren kann man aber schon, denn es gibt durchaus auch Personen, die ihre Tätigkeit für homeoffice-tauglich befinden, aber dennoch überwiegend im Betrieb arbeiten.
+- Bei den Wünschen ergibt sich ein differenziertes Bild: Viele Beschäftigte arbeiten im Homeoffice, wollen aber zurück in den Betrieb, aber auch viele Beschäftigte arbeiten im Betrieb, wollen aber ins Homeoffice. Man kann nicht sagen, dass die Verteilung einseitig wäre. Einzige Ausnahme: Von denjenigen, die gerne weniger im Betrieb arbeiten würden, geben recht viele (zwei Drittel) an, dass ihr Arbeitgeber sie davon abhält.
+
+```{r, cache=F, echo=F, message=F, warning=F}
+# Analyse ausführen und so Workspace laden
+source("master.R", encoding = "UTF-8")
+```
+
+# Datenanalyse
+
+## Verteilung Homeoffice
+
+Wir erhalten eine plausible Kurve: Im Dezember hat sich noch wenig getan (besonders, wenn man die Kategorie "ausschließlich im Betrieb" betrachtet), erst im Januar hat sich etwas getan: 25% Homeoffice und damit die alte Aprilquote (um es vergleichbar zu machen, hier die ungewichteten Daten für alle Wellen):
+
+```{r, echo=F, message=F, warning=F, fig.height=8, out.width = "120%"}
+
+ho %>% 
+  mutate(Homeoffice = x) %>%
+  select(Homeoffice, apr, jun, nov, dec, jan) %>%
+   kbl() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = F)
+
+plot_ho
+
+
+```
+
+## Beschluss der Bundesregierung
+
+Insgesamt geben `r beschluss[1,2]` % der Befragten an, Sie arbeiteten aufgrund des Beschlusses der Bundesregierung verstärkt im Homeoffice. Besonders häufig geben dies naheliegenderweise diejenigen an, die tatsächlich überwiegend von zu Hause aus arbeiten (`r beschluss_ho[3,3]` %) und diejenigen, die an wechselnden Arbeitsorten arbeiten (`r beschluss_ho[5,3]` %). 
+
+Man könnte sich an dieser Stelle noch eionmal gezielt diejenigen ansehen, die zwischen Dezember und Januar ins Homeoffice "gewechselt" sind. Hier würde sich auch eine Kausalinterpretation anbieten. Mit einer Quick-and-dirty-Analyse ergibt sich, dass `r beschluss_kausal[1,2]` % derjenigen, die im Dezmeber *nicht* überwiegend im Homeoffice waren, im Januar aber schon, dies aufgrund der Beschlüsse der Regierung waren. 
+
+
+## Potenzial
+`r potenzial[1,2]` % geben an, ihre Tätigkeit könne uneingeschränkt von zu Hause ausgeführt werden, weitere `r potenzial[2,2]` % sagen, dies gelte für den Großteil ihrer Tätigkeit. Zumindest einzelne Arbeitsprozesse können von weiteren `r potenzial[3,2]` % im Homeoffice erledigt werden.
+
+Es bietet sich an, diese Angaben mit dem tatsächlichen Homeoffice im Januar zu kreuzen (Denkbar wäre auch, das für den Dezember zu machen um zu illustrieren, wo Potenzial verschenkt wurde):
+
+```{r, echo=F, message=F, warning=F, fig.height=8, out.width = "120%"}
+
+plot_potenzial
+
+
+```
+
+Wir sehen, dass sich die Verteilung sehr gradlinig und plausibel darstellt. Am ehesten könnte man bei denjenigen ansetzen, deren Tätiogkeit Homeoffice-geeignet ist, die aber dennoch "überwiegend" im Betrieb sind. Ich habe dazu eine Branchenauswertung erzeugt (hier nicht ausgewiesen) - es deutet sich aber an, dass die Öffentliche Verwaltung und das Gesundheitswesen hier herausstechen. 
+
+## Wünsche der Beschäftigten
+
+Wenn man nur diejenigen betrachtet, die überwiegend im Homeoffice arbeiten, sind `r ho_wunsch[1,2]` % mit der Anzahl der Tage, die sie im Homeoffice arbeiten, zufrieden. `r ho_wunsch[3,2]` % möchten gerne weniger im Homeoffice arbeiten. 
+
+Von denjenigen, die überwiegend im Betrieb arbeiten, sind `r betrieb_wunsch[1,2]` % damit zufrieden; `r betrieb_wunsch[3,2]` % möchten gerne weniger im Betrieb arbeiten (Allerdings fehlt hier die Kategorie "trifft nicht zu"). Wir haben hier eine annähernde Spiegelung der Daten und wir können nicht behaupten, dass ein größerer Teil entweder aus dem Homeoffice oder aus dem Betrieb "raus möchte".
+
+So verteilt sich auch die Frage, ob der Arbeitgeber Beschäftigte daran hindert, mehr / weniger im Betrieb / HomeOffice zu arbeiten, eher ähnlich. Zu etwa gleichen Anteilen geben Beschäftigte, die ihrer Arbeitsortpräferenz nicht nachkommen können, ihr Arbeitgeber hindere sie daran und es seien "andere Gründe". Einzige Ausnahme: Unter denjenigen, die gerne weniger im Betrieb arbeiten würden, geben `r betrieb_hindert[3,3]` an: "Mein Arbeitgeber lässt dies nicht zu." Diese Gruppe könnte man sich nochmal genauer anschauen. 
+

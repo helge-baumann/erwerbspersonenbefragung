@@ -1,0 +1,79 @@
+---
+title: "Erwerbspersonenbefragung"
+subtitle: "Ergebnisse zum Homeoffice - Daten für PM"
+author: "Helge Emmler"
+date: "`r format(Sys.time(), '%d. %B %Y')`"
+output:
+  rmdformats::readthedown:
+    highlight: haddock
+    number_sections: no
+    toc_depth: 3
+    toc_float: true
+    self_contained: yes
+  html_document:
+    toc_depth: '3'
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=F}
+if (!("pacman" %in% installed.packages()[, 1])) install.packages("pacman")
+library(pacman)
+p_load(haven, dplyr, stringr, tidyr, ggplot2, gridExtra, kableExtra)
+```
+
+# Ergebnisse
+
+In diesem kurzen Dokument werden nur die Zahlen berichtet, die für die geplante Pressemitteilung von Bedeutung sind.
+
+
+
+```{r, cache=F, echo=F, message=F, warning=F}
+# Analyse ausführen und so Workspace laden
+source("master.R", encoding = "UTF-8")
+```
+
+## Fallzahl und Zeitraum
+
+Es wurden `r nrow(dat)` Erwerbspersonen vom `r min(dat$Interviewtag)` bis zum `r max(dat$Interviewtag)` befragt.
+
+## Verteilung Homeoffice (Entwicklung)
+
+```{r, echo=F, message=F, warning=F, fig.height=8, out.width = "120%"}
+
+ho %>% 
+  mutate(Homeoffice = x) %>%
+  select(Homeoffice, apr, jun, nov, dec, jan) %>%
+   kbl() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = F)
+
+
+
+```
+
+## Potenzial Homeoffice
+
+```{r, echo=F, message=F, warning=F, fig.height=8, out.width = "120%"}
+
+potenzial %>% 
+  mutate(Einschätzung = x) %>%
+ select(Einschätzung, anteil) %>%
+   kbl() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = F)
+
+
+
+```
+ 
+## "Zwang" zur Betriebsratsarbeit
+
+Unter allen Erwerbstätigen, die ihre Tätigkeit für vollständig oder großteils für Homeoffice-tauglich befinden (`r round(sum(pot[1:2, 2]))` %),  arbeiten rund `r round(sum(betr[1, 2]))` % ausschließlich oder überwiegend im Betrieb. Von diesen würden `r round(ho_wunsch2[3,2])` % gerne weniger im Betrieb arbeiten als derzeit. Von diesen geben `r round(ho_wunsch2_zwang[1,2])` % an, ihr Arbeitgeber lasse ihren Wunsch nicht zu. 
+
+Kurzum: `r round(sum(pot[1:2, 2])/100 * betr[1, 2]/100 * ho_wunsch2[3,2]/100, digits=2)*100` % arbeiten im Betrieb, würden gerne weniger im Betrieb arbeiten, ihre Tätigkeit lässt das auch zu. Das liegt zu `r round(ho_wunsch2_zwang[1,2])` % am Arbeitgeber. 
+
+## Zukunft Homeoffice
+
+`r zukunft[1,2]` % derer, die ganz oder teilweise im Homeoffice arbeiten, möchten auch weiter so im Homeoffice arbeiten. `r zukunft[2,2]` % möchten weniger von zu Haus aus arbeiten und `r zukunft[3,2]` % gar nicht. 

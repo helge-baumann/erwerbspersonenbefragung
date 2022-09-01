@@ -1,0 +1,173 @@
+---
+title: "Ergebnisse Erwerbspersonenbefragung"
+subtitle: "Welle 1-5, Längsschnitt"
+author: "Helge Emmler"
+date: "20. Juli 2021"
+output:
+  rmdformats::readthedown:
+    highlight: haddock
+    number_sections: no
+    toc_depth: 3
+    toc_float: true
+    self_contained: yes
+  html_document:
+    toc_depth: '3'
+    df_print: paged
+---
+
+<style> 
+ol {
+
+font-size: 16px; 
+margin-left: 0px;
+padding-left: 0px;
+
+}
+
+ol li {
+
+margin-left: 0px;
+margin-left: 0px;
+padding-left: 0px;
+
+}
+
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(pacman)
+p_load(dplyr, ggplot2, kableExtra, DT, stringr, openxlsx)
+options(knitr.kable.NA = '')
+```
+
+# Einleitung
+
+In diesem Dokument finden Sie die Ergebnisse der fünften Welle der Erwerbspersonenbefragung. Sofern eine Frage bereits in früheren Wellen gestellt wurde, werden die Ergebnisse aller Wellen ausgewiesen; die Zeile mit dem höchsten Wellenwert ist dann blau hinterlegt. 
+
+Klicken Sie im linken Menübereich auf "Ergebnisse" und Sie gelangen zu den Variablen. Neben den tabellarischen Auswertungen finden Sie dort die Variablenlabels sowie die Namen, unter denen die Variablen in den jeweiligen Wellen erhoben wurden.  
+
+Zum Anfang gelangen Sie durch Klick auf die erste Ebene des Inhaltsverzeichnisses (z.B. "Ergebnisse"). 
+
+# Zusammenfassung
+
+An dieser Stelle sollen nur einige allgemeine Entwicklungen zusammengefasst werden:
+
+1. Arbeitssituation / Einkommen
+    + Das Homeoffice-Niveau entspricht dem Sommer 2020: 67% im Betrieb, 15% überwiegend von zu Hause (F2 / A2).
+    + Befragte im Homeoffice arbeiten inzwischen häufiger zu "vergleichbaren Uhrzeiten" wie im Betrieb. Grundsätzlich findet das Homeoffice auch mehr Zustimmung als z.B. in Welle 3, als ähnlich viele Personen im Homeoffice waren (wenn auch nicht zwingend dieselben). 
+    + Befragte bewerten ihre Work-Life-Balance etwas positiver als vorher. 
+    + Die Arbeitszeiten waren den ganzen Winter über sehr weit unten: Bei teilweise unter 34 Stunden durchschnittlich, erst in den letzten beiden Monaten wieder ca. 36. Die Differenz Männer / Frauen beträgt ziemlich konstant immer 6,5 Stunden. 
+    + So viele Personen wie bisher noch in keiner Welle glauben, dass sich die Krise (nicht mehr) negativ auf ihr Einkommen auswirken wird (59%, bisher zwischen 47 und 54%; F8)
+    + Die Einkommen liegen etwa auf dem Vorkrisenniveau, das wir retrospektiv erfasst haben. 
+    + Konsumausgaben sind gestiegen. 
+    
+2. Einstellungen / Sorgen    
+    + Passend zu den Einkommen sind die Belastungsgefühle (wirtschaftlich / familiär) eher rückläufig.
+    + Die Zufriedenheit mit der Regierung ist aber auf dem Tiefpunkt. 59% sehr oder ziemlich unzufrieden (44% Welle 3). 
+    + Auch die Populismus-Items halten sich nach wie vor auf dem Niveau der Lockdowns. 
+    + Die Einschränkung der Grundrechte wird kritischer gesehen. 
+    
+3. Umgang mit der Pandemie
+    + Retraditionalisierung: Frauen in Paarhaushalten mit Kindern geben zu 69% an, sie übernähmen den Großteil der Kinderbetreuung. Der Wert war noch in keiner Welle so hoch.
+    + Die Einhaltung der AHA-Regeln wird laut Selbstauskunft nicht mehr ganz so eng gesehen, ebenso ärgern sich weniger Befragte über "Menschen, die sich nicht an die Regeln halten". 
+    + Sorge um Ansteckung (selbst oder Freunde/Familie) ist rückläufig (16% Große Sorgen vs. 30% in Welle 3), gleichzeitig waren inzwischen schon 61% im direkten Umfeld von Infektionen betroffen (38% Welle 3).
+    + 47% sind vollständig geimpft, 28% zur Hälfte, 5% haben einen Termin und 19% weder Impfung noch Termin.
+    + Save the best for the last: Von diesen 19% möchten sich 33% "eher nicht" impfen lassen und 34% auf keinen Fall. 
+  
+```{r, include=F, cache=F}
+
+# und wenn ich was kommentiere?
+
+Ergebnis <- readRDS("./Output/Ergebnisse_Laengsschnitt.rds")
+
+```
+
+# Ergebnisse
+
+
+```{r, eval=T, echo=F, message=F, warning=F, results="asis", cache=T}
+
+unikate <- names(Ergebnis)
+
+unikate <- unikate %>% as_tibble() %>% mutate(s = case_when(
+  str_detect(value, "^[[A]]") | str_detect(value, "^W5_A") | str_detect(value, "^F2_") ~ 1,
+  str_detect(value, "^[[B]]") | str_detect(value, "^W5_B") ~ 2,
+  str_detect(value, "^[[C]]") | str_detect(value, "^W5_C") | str_detect(value, "^F[[:digit:]]{2}") ~ 3,
+  str_detect(value, "^[[D]]") | str_detect(value, "^W5_D") | str_detect(value, "^F8_") | str_detect(value, "^F9_") | str_detect(value, "^F34_") ~ 4,
+  str_detect(value, "^S") | str_detect(value, "^W5_S")  ~ 5,
+  str_detect(value, "^c_") ~ 6
+  )) %>%
+  arrange(s) %>%
+  pull(value)
+
+for(b in unikate) {
+  
+  # Überschrift
+  if(b == "F2_w12345") cat(paste0("## ", "Homeoffice und Arbeitssituation", "  \n"))
+  if(b == "B3_w235") cat(paste0("## ", "Konsum", "  \n"))
+  if(b == "F12_w1235") cat(paste0("## ", "Einstellungen und Sorgen", "  \n"))
+  if(b == "F8_w1235") cat(paste0("## ", "Einkommen und sonstige Angaben", "  \n"))
+  if(b == "SC1_w12345") cat(paste0("## ", "Screening und Soziodemographie", "  \n"))
+   
+  # Variablenname
+  cat(paste0("### ", 
+             str_replace(Ergebnis[[b]]$label, fixed("."), "-"), " (", Ergebnis[[b]]$name, ")", "\n"))
+  cat("  \n")
+ 
+  # Erhoben in
+   cat(paste0("#### Erhoben in den Wellen:  \ ", paste(unique(Ergebnis[[b]]$table$Welle), collapse=", "), "  \n"))
+  cat("  \n")
+  
+    cat(paste0("#### ...unter folgenden Variablennamen: ",  Ergebnis[[b]]$namen,   "\n"))
+  cat("  \n")
+
+   
+ max <- Ergebnis[[b]]$table %>%
+   ungroup() %>%
+    arrange(Variable, Wert, get(b), Welle) %>%
+    mutate(r = row_number()) %>%
+    group_by(Variable, Wert, get(b)) %>%
+    mutate(flag = if_else(anteil == max(anteil), 1, 0)) %>%
+    filter(flag==1) %>%
+    pull(r)
+    
+    
+      tab <- Ergebnis[[b]]$table %>%
+   arrange(Variable, Wert, get(b), Welle) %>%
+        select(Variable, Wert, b, everything()) %>%
+        rename(!!str_remove(b, "_w[:digit:]{1,4}$") := b,
+               "Anteil" = anteil, "N" = n) %>%
+        mutate(Wert = str_remove_all(Wert, "[:digit:].\\s")) %>%
+    kbl(digits=0, escape=F) %>%
+       row_spec(1, bold = T) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"), 
+                  font_size = 11, fixed_thead=T) #%>%
+      #scroll_box(height="500px", fixed_thead=T)  
+    if(length(unique(Ergebnis[[b]]$table$Welle)) > 1) {
+      
+      for(m in max) {
+      tab <- tab %>%
+        row_spec(m, bold = T, color = "white", background = "#073cfa") 
+      }
+        
+    }
+      
+    
+    print(tab)
+    cat("  \n")  
+    cat("  \n") 
+    
+  
+   
+  
+
+cat("*****")
+cat("  \n") 
+ 
+} 
+  
+
+```
+
+

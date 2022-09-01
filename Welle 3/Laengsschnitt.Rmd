@@ -1,0 +1,242 @@
+---
+title: "Ergebnisse Erwerbspersonenbefragung"
+subtitle: "Welle 1-3, Längsschnitt"
+author: "HE"
+date: "17. Dezember 2020"
+output:
+  rmdformats::readthedown:
+    highlight: haddock
+    number_sections: no
+    toc_depth: 3
+    toc_float: true
+    self_contained: yes
+  html_document:
+    toc_depth: '3'
+    df_print: paged
+---
+
+<style> 
+ol {
+
+font-size: 16px; 
+margin-left: 0px;
+padding-left: 0px;
+
+}
+
+ol li {
+
+margin-left: 0px;
+margin-left: 0px;
+padding-left: 0px;
+
+}
+
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(pacman)
+p_load(dplyr, ggplot2, kableExtra, DT, stringr, openxlsx)
+options(knitr.kable.NA = '')
+```
+
+# Einleitung
+
+In diesem Dokument finden Sie die Ergebnisse der ersten drei Wellen der Erwerbspersonenbefragung im Wellenvergleich. Gravierende Unterschiede (d.h., wenn in einer Kategorie mehr als 5% Abweichungen zwischen Wellen festgestellt werden), sind rot hinterlegt.
+
+Klicken Sie im linken Menübereich auf "Ergebnisse" und Sie gelangen zu den Variablen. Neben den tabellarischen Auswertungen finden Sie dort die Werte- sowie Variablenlabels.  
+
+Zum Anfang gelangen Sie durch Klick auf die erste Ebene des Inhaltsverzeichnis (z.B. "Ergebnisse"). 
+
+# Zusammenfassung
+
+Wenn man sich die gravierendsten Veränderungen über den betrachteten Zeitraum ansieht (April - Juni - Anfang November) ansieht, lassen sich vier Typen von Entwicklungen im betrachteten Zeitraum feststellen:
+
+1. Veränderungen zwischen April und Juni, die bis November konstant blieben: 
+    + Im April arbeiteten 27% überwiegend im Homeoffice, im Juni nur noch 16% und im November(!) 14%.
+    + Vor allem zwischen April und Juni gab es (gefühlt) negative Auswirkungen der Coronakrise auf die Einkommen.
+    + Die Zustimmung zu den Coronamaßnahmen hat zwischen Welle 1 und 2 abgenommen und die Ablehnung ist in Welle 3 etwa gleich geblieben.  
+
+2. Veränderungen, die erst zwischen Juni und November erkennbar wurden:
+    + Die Zufriedenheit mit dem Krisenmanagement der Bundesregierung nahm erst in Welle 3 deutlich ab.
+    + Der Anteil von Personen, die nach der Krise so häufig im Homeoffice arbeiten wollen wie während der Krise, wächst (erst ab Welle 2 gefragt). Mit etwas Phantasie kann man auch feststellen, dass in Welle 3 weniger Personen sagen, dass die Grenzen zwischen Arbeit und Freizeit im Homeoffice verschwimmen und dass sie ständig erreichbar seien.
+    + Weiterbildung in der Krise: Deutliche Zunahme in Welle 3 (erst ab Welle 2 gefragt)
+    + Einstellungen: wenig Veränderung, deutliche Abnahme der Zustimmung zu "Ich kann mir vorstellen, dass die Pandemie von Eliten benutzt wird, um die Interessen von Reichen und Mächtigen durchzusetzen"
+    + Anteil der Personen mit Jobwechsel bei den Unter-30-Jährigen ist in Welle 3 gestiegen.   
+  
+3. Veränderungen zwischen Welle 1 und 2 mit Verstärkung in Welle 3: 
+    + Arbeitszeitreduktion wegen Kinderbetreuung nahm stetig zu.
+    + Verteilung Kinderbetreuung: Verstärkung zu Lasten von Frauen in allen Wellen.  
+  
+4. Verbesserungen zwischen Welle 1 und 2 mit Umkehr in Welle 3:
+    + Die Hilfsmaßnahmen wurden in Welle 2 zunehmend als "ausreichend" betrachtet, in Welle 3 nicht mehr. 
+    + Belastungsgefühle durch Coronakrise nahmen erst ab, dann wieder (leicht) zu
+    + Sorgen, z.B. um Gesundheit, nahmen erst ab, dann wieder (stark) zu.  
+
+```{r, include=F, cache=F}
+
+Ergebnis <- readRDS("./Output/Laengsschnittse_2020-12-17.rds")
+
+abgleich <- read.xlsx(
+  "./Abgleich/2020-12-17_Erwerbspersonenbefragung_Abgleich-Welle123.xlsx", 
+  startRow=2
+)
+
+names(abgleich) <- c("n1", "l1", "n2", "l2", "n3", "l3", "erh", "iden", "anm")
+
+```
+
+# Ergebnisse
+
+
+```{r, eval=T, echo=F, results="asis", cache=T}
+
+namen <- names(Ergebnis$Varnames)
+unikate <- unique(str_remove(names(Ergebnis$Varnames), "_t.*"))
+unikate <- unikate %>% as_tibble() %>% mutate(s = case_when(
+  str_detect(value, "^[[AF]]") ~ 1,
+  str_detect(value, "^[[C]]") ~ 2,
+  str_detect(value, "^[[B]]") ~ 3,
+  str_detect(value, "^[[SD]]") ~ 4)) %>%
+  arrange(s) %>%
+  pull(value)
+
+
+for(b in unikate[!unikate=="Faktor_w123"]) {
+  
+  waves <- str_remove(str_extract(b, "_w[[:digit:]].*"), "_w")
+  waves <- unlist(str_split(waves, ""))
+  waves <- as.numeric(waves)
+  
+  # Überschrift
+  if(b == "F1_w12") cat(paste0("## ", "Arbeitssituation", "  \n"))
+  if(b == "C4_w23") cat(paste0("## ", "Einstellungen", "  \n"))
+  if(b == "B2_w23") cat(paste0("## ", "Konsum", "  \n"))
+  if(b == "SC1_w123") cat(paste0("## ", "Screening und Demographie", "  \n"))
+  
+   namen <- which(abgleich$n1 == str_remove(b, "_w.*") | abgleich$n2 == str_remove(b, "_w.*"))[1]
+   
+  # Variablenname
+  cat(paste0("### ", str_remove(b, "_w.*"), " (",  
+          str_remove(paste0(abgleich[namen, paste0("l", waves[1])]), "^[^\\s]*\\s"), ")",
+          "  \n"))
+  cat("  \n")
+  
+  
+ 
+  # Erhoben in
+  
+  
+   cat(paste0("#### Erhoben in den Wellen:  \ ", paste(waves, collapse=", "), "  \n"))
+  cat("  \n")
+  
+  cat(paste0("#### Variablennamen:  \n ", paste(abgleich[namen, paste0("n", waves)], collapse=", "), "  \n"))
+  cat("  \n")
+  
+  
+  
+  # Variablenlabel
+  
+  #for(j in waves) {
+  lab <- paste(paste0(abgleich[namen, paste0("l", waves)], " (Welle ", waves, ")"), collapse=", ")
+  
+  cat(paste0("#### Variablenlabel:  \n", lab, "  \n"))
+  cat("  \n")
+  
+  #}
+  
+  # Wertelabels
+  labs <- Ergebnis$Labels[[paste0(b, "_t", waves[1])]] 
+  
+  cat(paste0("#### Wertelabel:", "  \n"))
+  
+  if(!is.null(Ergebnis$Labels[[paste0(b, "_t", waves[1])]]) & length(Ergebnis$Labels[[paste0(b, "_t", waves[1])]])>0) {
+    cat("  \n")  
+    print(kable(labs))
+    cat("  \n") 
+  }
+  
+  if(is.null(Ergebnis$Labels[[paste0(b, "_t", waves[1])]]) | length(Ergebnis$Labels[[paste0(b, "_t", waves[1])]])==0) {
+    cat("(keine)  \n") 
+    cat("  \n") 
+  }
+  
+  for(j in waves) {
+  if(!is.null(Ergebnis$Tabelle[[paste0(b, "_t", j)]])) {
+    cat(paste0("#### Tabelle Welle ", j, ": ", "  \n"))
+    
+    Ergebnis$Tabelle[[paste0(b, "_t", j)]][,2]<- str_remove(pull(Ergebnis$Tabelle[[paste0(b, "_t", j)]][,2]), "\\(.\\) ")
+    
+    rows <- NULL
+    if(j > min(waves)) {
+      
+      wb <- waves[which(waves == j)-1]
+      num <- 0
+      
+        
+        for(l in 1:nrow(Ergebnis$Tabelle[[paste0(b, "_t", j)]])) {
+          
+          k <- ncol(Ergebnis$Tabelle[[paste0(b, "_t", j)]])
+          
+          diff <- as.numeric(Ergebnis$Tabelle[[paste0(b, "_t", j)]][l,5:k])-
+            as.numeric(Ergebnis$Tabelle[[paste0(b, "_t", wb)]][l,5:k])
+          
+          diff <- sum(abs(diff), na.rm=T)/length(diff)
+          
+          
+          if(!is.na(diff) & diff > 0 & all(!(c("Minimum", "Maximum") %in% names(Ergebnis$Tabelle[[paste0(b, "_t", wb)]])))) {
+          perc <- diff/(sum(Ergebnis$Tabelle[[paste0(b, "_t", wb)]][l,5:k], na.rm=T)/(k-4))
+          #perc <- 0
+          
+          
+          if((perc >= 0.1) & (diff >= 0.05)) {
+            num <- num+1
+rows[num] <- l
+#cols[num] <- k
+          
+          
+          }
+        }
+        
+      }
+      if(!is.null(rows)) rows <- unique(rows)
+     # if(!is.null(rows)) cols <- unique(cols)
+      
+    }
+    
+    tab <- 
+      Ergebnis$Tabelle[[paste0(b, "_t", j)]] %>%
+  
+    kbl(digits=2, escape=F) %>%
+       row_spec(1, bold = T) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"), 
+                  font_size = 11, fixed_thead=T) #%>%
+      #scroll_box(height="500px", fixed_thead=T)  
+    
+    if(!is.null(rows)) {
+      for(m in rows) {
+      tab <- tab %>%
+        row_spec(m, bold = T, color = "white", background = "#fc2008") 
+      }
+        
+      
+    }
+    print(tab)
+    cat("  \n")  
+    cat("  \n") 
+    
+  }
+   
+  }
+  
+
+cat("*****")
+cat("  \n") 
+  
+  
+}
+
+```
+
+

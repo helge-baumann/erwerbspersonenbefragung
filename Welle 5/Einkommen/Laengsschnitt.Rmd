@@ -1,0 +1,161 @@
+---
+title: "Ergebnisse Erwerbspersonenbefragung"
+subtitle: "Welle 1-4, Längsschnitt"
+author: "Helge Emmler"
+date: "25. Februar 2021"
+output:
+  rmdformats::readthedown:
+    highlight: haddock
+    number_sections: no
+    toc_depth: 3
+    toc_float: true
+    self_contained: yes
+  html_document:
+    toc_depth: '3'
+    df_print: paged
+---
+
+<style> 
+ol {
+
+font-size: 16px; 
+margin-left: 0px;
+padding-left: 0px;
+
+}
+
+ol li {
+
+margin-left: 0px;
+margin-left: 0px;
+padding-left: 0px;
+
+}
+
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(pacman)
+p_load(dplyr, ggplot2, kableExtra, DT, stringr, openxlsx)
+options(knitr.kable.NA = '')
+```
+
+# Einleitung
+
+In diesem Dokument finden Sie die Ergebnisse der vierten Welle der Erwerbspersonenbefragung. Sofern eine Frage bereits in früheren Wellen gestellt wurde, werden die Ergebnisse aller Wellen ausgewiesen; die Zeile mit dem höchsten Wellenwert ist dann blau hinterlegt. 
+
+Klicken Sie im linken Menübereich auf "Ergebnisse" und Sie gelangen zu den Variablen. Neben den tabellarischen Auswertungen finden Sie dort die Variablenlabels sowie die Namen, unter denen die Variablen in den jeweiligen Wellen erhoben wurden.  
+
+Zum Anfang gelangen Sie durch Klick auf die erste Ebene des Inhaltsverzeichnisses (z.B. "Ergebnisse"). 
+
+# Zusammenfassung
+
+Es sind nur wenige Variablen erhoben worden (vornehmend zum Homeoffice), deshalb lassen sich nur wenige Entwicklungen und markante Ergebnisse festhalten:
+
+1. Das Homeoffice wurde im Juni, November und Dezember am wenigsten genutzt, im Januar ging es wieder hoch:
+    + Im April arbeiteten 27% überwiegend im Homeoffice, im Juni nur noch 16%, im November 14%, im Dezember 18% und im Januar 2021 wieder 24%.
+    + Viele Personen geben an, dass sie durch die Beschlüsse der Bundesregierung vom 19. Januar 2021 verstärkt im Homeoffice arbeiten (13%, 33% unter denjenigen im Homeoffice).
+    + Dennoch ist die ausschließliche oder überwiegende Präsenzarbeit (60%) nach wie vor hoch (53% im April 2020).
+    + 39% halten ihre Tätigkeit uneingeschränkt oder grundsätzlich für homeoffice-tauglich.
+    + Ein gemischtes Bild ergibt sich bei der "Schuldfrage" der niedrigen Novemberzahlen: Einige arbeiten jetzt im Betrieb, möchten aber eigentlich ins Homeoffice, andere aber arbeiten im Homeoffice und würden lieber in den Betrieb. Rund 3% arbeiten im Betrieb und werden vom Arbeitgeber daran gehindert ins Homeoffice zu gehen, obwohl sie das möchten und ihre Tätigkeit dazu geeignet sei (klingt nach wenig, sind "hochgerechnet" aber gut eine Millionen Beschäftigte.) 
+
+2. Einstellungen zum Homeoffice sind weitestgehend konstant:
+    + Unter den Personen, die im Homeoffice arbeiten, möchten 49% nach der Krise weiterhin (so viel) im Homeoffice arbeiten wie bisher (im November: 55%).
+    + grundsätzlich wurde die Heimarbeit im April 2020 als am anstrengendsten empfunden; allerdings nähern sich die Werte wieder an (vermutlich eine Folge dessen, dass nun wieder viele Beschäftigte im Homeoffice sind, die das eigentlich nicht möchten).
+    + in Welle 4 geben aber relativ viele zu Protokoll, dass der Kontakt zu Kolleg:inn:en im Homeoffice nicht zu ersetzen sei, und dass es ihnen schwerer falle, ihre üblichen Arbeitszeiten einzuhalten. Auch die (gefühlte) Kontrolle durch den Arbeitgeber nimmt leicht zu.
+    + Einschränkender Hinweis: Um die "Entwicklungen" der Einstellungen zu untersuchen, sollte man gezielt die Personen betrachten, die durchgehend im Homeoffice waren, sonst hat man jeweils ein sehr selektives Sample.
+    
+3. Belastungsgefühle und Sorgen:
+    + Belastungsgefühle und Sorgen waren am schlimmsten im April 2020.
+    + Die Werte nähern sich den Aprilwerten aber wieder an.
+    + Dies gilt besonders für familiäre Sorgen und die Gesamtsituation.
+    + 30% der Personen, die ausschließlich oder überwiegend im Betrieb arbeiten, glauben, dass sie dadurch unnötig einer Infektionsgefahr ausgesetzt seien. 
+  
+```{r, include=F, cache=F}
+
+Ergebnis <- readRDS("./Output/Ergebnisse_Laengsschnitt.rds")
+
+```
+
+# Ergebnisse
+
+
+```{r, eval=T, echo=F, message=F, warning=F, results="asis", cache=T}
+
+unikate <- names(Ergebnis)
+
+unikate <- unikate %>% as_tibble() %>% mutate(s = case_when(
+  str_detect(value, "^[[AFW]]") ~ 1,
+  str_detect(value, "^[[ST]]") ~ 2,
+  str_detect(value, "^[[I]]") ~ 3)) %>%
+  arrange(s) %>%
+  pull(value)
+
+for(b in unikate) {
+  
+  # Überschrift
+  if(b == "F2_w1234") cat(paste0("## ", "Homeoffice", "  \n"))
+  if(b == "SC1_w1234") cat(paste0("## ", "Screeningfragen", "  \n"))
+  if(b == "Interviewtag_w4") cat(paste0("## ", "Interviewtag", "  \n"))
+   
+  # Variablenname
+  cat(paste0("### ", Ergebnis[[b]]$label, "(", Ergebnis[[b]]$name, ")", "\n"))
+  cat("  \n")
+ 
+  # Erhoben in
+   cat(paste0("#### Erhoben in den Wellen:  \ ", paste(unique(Ergebnis[[b]]$table$Welle), collapse=", "), "  \n"))
+  cat("  \n")
+  
+    cat(paste0("#### ...unter folgenden Variablennamen: ",  Ergebnis[[b]]$namen,   "\n"))
+  cat("  \n")
+
+   
+ max <- Ergebnis[[b]]$table %>%
+   ungroup() %>%
+    arrange(Variable, Wert, get(b), Welle) %>%
+    mutate(r = row_number()) %>%
+    group_by(Variable, Wert, get(b)) %>%
+    mutate(flag = if_else(anteil == max(anteil), 1, 0)) %>%
+    filter(flag==1) %>%
+    pull(r)
+    
+    
+      tab <- Ergebnis[[b]]$table %>%
+   arrange(Variable, Wert, get(b), Welle) %>%
+        select(Variable, Wert, b, everything()) %>%
+        rename(!!str_remove(b, "_w[:digit:]{1,4}$") := b,
+               "Anteil" = anteil, "N" = n) %>%
+        mutate(Wert = str_remove_all(Wert, "[:digit:].\\s")) %>%
+    kbl(digits=0, escape=F) %>%
+       row_spec(1, bold = T) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"), 
+                  font_size = 11, fixed_thead=T) #%>%
+      #scroll_box(height="500px", fixed_thead=T)  
+    if(length(unique(Ergebnis[[b]]$table$Welle)) > 1) {
+      
+      for(m in max) {
+      tab <- tab %>%
+        row_spec(m, bold = T, color = "white", background = "#073cfa") 
+      }
+        
+    }
+      
+    
+    print(tab)
+    cat("  \n")  
+    cat("  \n") 
+    
+  
+   
+  
+
+cat("*****")
+cat("  \n") 
+ 
+} 
+  
+
+```
+
+

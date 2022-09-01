@@ -1,0 +1,100 @@
+---
+title: "Ergebnisse Erwerbspersonenbefragung"
+subtitle: "Welle 1-3"
+author: "HE"
+date: "11. Dezember 2020"
+output:
+  rmdformats::readthedown:
+    highlight: haddock
+    number_sections: no
+    toc_depth: 3
+    toc_float: true
+    self_contained: yes
+  html_document:
+    toc_depth: '3'
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(pacman)
+p_load(dplyr, ggplot2, kableExtra, DT, stringr)
+options(knitr.kable.NA = '')
+```
+
+# Einleitung
+
+In diesem Dokument finden Sie die Ergebnisse der ersten drei Wellen der Erwerbspersonenbefragung. 
+
+Klicken Sie im linken Menübereich auf "Ergebnisse", den entsprechenden Wellenbereich und Sie gelangen zu den Variablen dieser Welle. Sie können dann entweder alle Variablen des Blocks durchscrollen, oder aber wieder links im nun aufgeklappten Inhaltsverzeichnis des Bereichs einzelne Variablen ansteuern. Neben den tabellarischen Auswertungen finden Sie dort die Werte- sowie Variablenlabels.  
+
+Zum Anfang gelangen Sie durch Klick auf die erste Ebene des Inhaltsverzeichnis (z.B. "Ergebnisse"). 
+
+```{r, include=F, cache=F}
+
+Ergebnis <- readRDS("./Output/Ergebnisse_2020-12-11.rds")
+
+```
+
+# Ergebnisse
+
+
+```{r, eval=T, echo=F, results="asis", cache=T}
+
+for(b in names(Ergebnis$Varnames)) {
+  
+  # Überschrift
+  if(b == "lfdn__1") cat(paste0("## ", "Welle I", "  \n"))
+  if(b == "lfdn_W2__2") cat(paste0("## ", "Welle II", "  \n"))
+  if(b == "lfdn_W3__3") cat(paste0("## ", "Welle III", "  \n"))
+  
+  # Variablenname
+  cat(paste0("### ", b, "  \n"))
+  cat("  \n")
+  
+  # Variablenlabel
+  lab <- Ergebnis$Label[[b]] 
+  
+  cat(paste0("#### Variablenlabel: ", lab, "  \n"))
+  #cat("  \n")
+  
+  # Wertelabels
+  labs <- Ergebnis$Labels[[b]] 
+  
+  cat(paste0("#### Wertelabels:", "  \n"))
+  
+  if(!is.null(Ergebnis$Labels[[b]]) & length(Ergebnis$Labels[[b]])>0) {
+    cat("  \n")  
+    print(kable(labs))
+    cat("  \n") 
+  }
+  
+  if(is.null(Ergebnis$Labels[[b]]) | length(Ergebnis$Labels[[b]])==0) {
+    cat("(keine)  \n") 
+    cat("  \n") 
+  }
+  
+  if(!is.null(Ergebnis$Tabelle[[b]])) {
+    cat(paste0("#### Tabelle:", "  \n"))
+    
+    Ergebnis$Tabelle[[b]][,2]<- str_remove(pull(Ergebnis$Tabelle[[b]][,2]), "\\(.\\) ")
+    tab <- 
+      Ergebnis$Tabelle[[b]] %>%
+  
+    kbl(digits=2) %>%
+       row_spec(1, bold = T, color = "white", background = "#D7261E") %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"), 
+                  font_size = 11, fixed_thead=T) #%>%
+      #scroll_box(height="500px", fixed_thead=T)  
+    print(tab)
+    cat("  \n")  
+    cat("  \n") 
+    
+   
+  }
+  
+}
+
+```
+
+

@@ -1,0 +1,146 @@
+---
+title: "Vorhersage Homeoffice"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+date: 29.08.2022
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Test Prediction
+library(pacman)
+p_load(ggplot2, dplyr, haven, stringr, tidyr, Hmisc, kableExtra) 
+dat <- 
+  read_sav("Boeckler_Corona_Welle8_Mai2022_final.sav") %>%
+  mutate(
+    homeoffice = case_when(
+      A2 == 1 ~ 0,
+      A2 %in% 2:3 ~ 1
+    ),
+    geschlecht = case_when(
+      S2 == 1 ~ "Mann",
+      S2 == 2 ~ "Frau"
+    ),
+    alter = S1,
+    bildung = case_when(
+      S3 %in% c(1,2,4,5) ~ "kein Abitur",
+      S3 == 3 ~ "Abitur"
+      ),
+    bundesland = as_factor(S4),
+    branche = as_factor(S5),
+    einkommen = case_when(
+      D2 %in% 1:4 ~ "geringes Einkommen",
+      D2 %in% 5:8 ~ "mittleres Einkommen",
+      D2 %in% 9:12 ~ "hohes Einkommen",
+      D2 == 99 ~ "keine Angabe"),
+    datum = as.character(Interviewtag),
+    zufrieden = case_when(
+      C1 %in% 1:4 ~ as.numeric(C1)
+    )
+  ) 
+
+set.seed(100)
+
+```
+
+
+# Vorbereitung
+
+## Einlesen
+Wir laden die Daten der Erwerbspersonenbefragung aus Welle 8. "Homeoffice" bedeutet, dass jemand *nicht* überwiegend im Betrieb arbeitet. "Trifft nicht zu/bin freigestellt" fällt raus. 
+
+## Zuweisung Trainings-/Testdaten
+Der Datensatz wird in einen Trainings- und einen Testdatensatz gesplittet, Verhältnis 2:1. Der Trainingsdatensatz simuliert quasi die uns bekannten Daten und der Testdatensatz einen "zukünftigen" Datensatz, mit dem wir später unsere Vorhersagen machen wollen. 
+
+```{r}
+# Zufallsziehung Zeilen/Beobachtungen des Datensatzes
+train <- sample(1:nrow(dat), size=2/3*nrow(dat))
+
+# Zuweisung Test- und Trainingsdatensatz
+dat_train <- dat[train,]
+dat_test <- dat[-train,]
+
+```
+
+## Messlatte / Threshold
+Bevor man Vorhersagen versucht, braucht man eine Messlatte, an der man spätere modellbasierte Vorhersagen messen kann. Dies ist der Mittelwert der binären Variable "Homeoffice" im Testdatensatz; dieser liegt derzeit bei `r round(mean(dat_train$homeoffice, na.rm=T), digits=3)*100`%. Ohne weitere Informationen würden wir also "annehmen"vorhersagen", dass jede Person *nicht* im Homeoffice ist und hätten damit eine Trefferquote von  `r (1-round(mean(dat_train$homeoffice, na.rm=T), digits=3))*100`%. 
+
+```{r}
+threshold <- mean(dat$homeoffice, na.rm=T)
+```
+
+# Modellierung 
+
+## Zwei Modelle mit Trainingsdatensatz
+Wir entwickeln nun zwei Logit-Modelle, ein simples, "inhaltlich" gestütztes und ein komplexes mit einigen weiteren, inhaltlich  irrelevanten Variablen. Das simple Logitmodell erklärt Homeoffice anhand von Bildung, Einkommen, Branche, Alter und Geschlecht. Beim komplexen Modell kommen das Bundesland, das Interviewdatum, die Zufriedenheit mit dem Krisenmanagement der Bundesregierung und die laufende Nummer hinzu:
+
+```{r}
+model_simple <- glm(homeoffice ~ bildung + einkommen + branche + alter + geschlecht, 
+                    data=dat_train, family=binomial)
+model_complex <- update(model_simple, ~ . + bundesland + datum + zufrieden + lfdn_W8)
+```
+
+## Check der Vorhersagen Trainingsdatensatz
+Nun erzeugen wir Matrizen, in denen wir die "Vorhersagen" mit den echten Werten in einer Vierfeldertabelle kontrastieren. Die Ergebnisse des simplen Modells (Zeilen = Vorhersagen, Spalten = "Wahrheit"):
+
+```{r, echo=F}
+# Test model_simple
+predict_1  <- table(
+  ifelse(
+    predict(model_simple, type="response", newdata=dat_train) < threshold, 0, 1
+    ),
+  dat_train$homeoffice
+)
+kbl(predict_1) %>%
+  kable_styling(full_width=F)
+```
+
+Die Ergebnisse des komplexen Modells:
+
+```{r, echo=F}
+# Test komplex
+predict_2  <- table(
+ifelse(
+  predict(model_complex, type="response", newdata=dat_train) < threshold, 0, 1
+),
+dat_train$homeoffice
+)
+kbl(predict_2)  %>%
+  kable_styling(full_width=F)
+```
+
+
+Die Trefferquote des simplen Modells beträgt `r round(sum(predict_1[1,1], predict_1[2,2])/sum(predict_1), digits=3)*100`%. Die Trefferquote des komplexen Modells beträgt `r round(sum(predict_2[1,1], predict_2[2,2])/sum(predict_2), digits=3)*100`%. Das ist nur natürlich, denn wir wissen ja, dass das R-Quadrat immer steigt, wenn wir zusätzliche Variablen aufnehmen, und damit auch die Vorhersagequalität (anhand der bekannten Daten). 
+
+# Test der Vorhersagequalität mit Testdaten
+
+Jetzt "testen" wir unsere Vorhersagen, in denen wir unsere beiden Modelle auf die Testdaten anwenden - dabei nehmen wir natürlich implizit an, es handelte sich um künftige Daten, bei denen wir die Werte der abhängigen Variablen nicht kennen. Deshalb müssen wir die Parameter unserer mit bekannten Daten entwickelten Modelle anwenden. 
+```{r, include=F}
+
+# Test model_simple
+predict_3  <- table(
+  ifelse(
+    predict(model_simple, type="response", newdata=dat_test) < threshold, 0, 1
+  ),
+  dat_test$homeoffice
+)
+
+# Test komplex
+predict_4  <- table(
+  ifelse(
+    predict(model_complex, type="response", newdata=dat_test) < threshold, 0, 1
+  ),
+  dat_test$homeoffice
+)
+```
+
+
+Die Trefferquote des simplen Modells beträgt `r round(sum(predict_3[1,1], predict_3[2,2])/sum(predict_3), digits=3)*100`%. Die Trefferquote des komplexen Modells beträgt `r round(sum(predict_4[1,1], predict_4[2,2])/sum(predict_4), digits=3)*100`%. 
+
+Im Testdatensatz wurden also mit zusätzlichen Informationen *schlechtere* Vorhersagen gemacht. Rainer Schnell würde vermutlich sagen: Das kommt davon, wenn man ohne klare Theorie an die Daten rangeht. 
+
+
