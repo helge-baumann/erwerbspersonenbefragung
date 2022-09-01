@@ -6,7 +6,7 @@ library(pacman)
 p_load(haven, dplyr)
 
 dat_long_full <- read_dta("Erwerbspersonenbefragung_Wellen1-8_long_full_v1-1.dta")
-dir.create("/Output")
+dir.create("./Output")
 
 rbind(
   dat_long_full %>%
