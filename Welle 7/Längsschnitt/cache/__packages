@@ -1,0 +1,15 @@
+base
+knitr
+pacman
+ggplot2
+dplyr
+Matrix
+lme4
+haven
+stringr
+tidyr
+xtable
+lattice
+survival
+Formula
+Hmisc
