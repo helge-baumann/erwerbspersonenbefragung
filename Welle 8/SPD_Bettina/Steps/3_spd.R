@@ -30,13 +30,13 @@ addWorksheet(wb, "SPD gesamt")
 writeDataTable(wb, "SPD gesamt", Ergebnis[Ergebnis$Variable1 == "spd" & Ergebnis$Variable2 == "gesamt", ], startRow=1)
 
 addWorksheet(wb, "Gesamt")
-writeDataTable(wb, b, Ergebnis[Ergebnis$Variable1 == "gesamt" & Ergebnis$Variable2 == "gesamt", ], startRow=1)
+writeDataTable(wb, "Gesamt", Ergebnis[Ergebnis$Variable1 == "gesamt" & Ergebnis$Variable2 == "gesamt", ], startRow=1)
 
 addWorksheet(wb, "SPD differenziert")
-writeDataTable(wb, b, Ergebnis[Ergebnis$Variable1 == "spd" & Ergebnis$Variable2 != "gesamt", ], startRow=1)
+writeDataTable(wb, "SPD differenziert", Ergebnis[Ergebnis$Variable1 == "spd" & Ergebnis$Variable2 != "gesamt", ], startRow=1)
 
 addWorksheet(wb, "Gesamt differenziert")
-writeDataTable(wb, b, Ergebnis[Ergebnis$Variable1 == "gesamt" & Ergebnis$Variable2 != "gesamt", ], startRow=1)
+writeDataTable(wb, "Gesamt differenziert", Ergebnis[Ergebnis$Variable1 == "gesamt" & Ergebnis$Variable2 != "gesamt", ], startRow=1)
 
 saveWorkbook(wb, paste0("Output/", Sys.Date(), "/", Sys.Date(), "_", "SPD-Kohlrausch.xlsx"), overwrite=T)
 

@@ -8,6 +8,7 @@ dat <-
     migration = as_factor(S16_w1)[1],
     partei_5 = as_factor(W5_S12_w57[5]),
     bundesland = as_factor(S4_w16[1]),
+    zweitstimme = W6_2_w6[6]
   ) %>%
   ungroup() %>%
   # Gruppen bilden
@@ -21,7 +22,7 @@ dat <-
     geschlecht = as_factor(S2_w12345678),
     bildung = as_factor(S3_w12345678),
     nettoeinkommen = cut(
-      hh_income_aeq_w1234578,
+      hh_income_aeq_w123578,
       breaks = c(0, 1500, 2000, 2500, 10000),
       labels = c(
         "bis unter 1.500 Euro", "1.500 bis unter 2.000 Euro",
